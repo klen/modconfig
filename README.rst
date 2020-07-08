@@ -5,6 +5,12 @@ modconfig
 
 modconfig -- Simple hierarchic configuration manager for apps
 
+.. _badges:
+
+.. image:: https://github.com/klen/modconfig/workflows/tests/badge.svg
+    :target: https://github.com/klen/modconfig/actions
+    :alt: Tests Status
+
 .. _motivation:
 
 Motivation
@@ -24,12 +30,6 @@ variables.
 not locked by format (json, yaml, ini) restrictions and able to use any python
 statements/modules to tune your configuration as a pro. It keeps the
 flexability and make your configuration very declarative without any magic.
-
-.. _badges:
-
-.. image:: https://github.com/klen/modconfig/workflows/tests/badge.svg
-    :target: https://github.com/klen/modconfig/actions
-    :alt: Tests Status
 
 .. _contents:
 
