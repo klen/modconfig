@@ -110,7 +110,7 @@ at https://github.com/klen/modconfig/issues
 Contributing
 ============
 
-Development of AIOHTTP OAuth Client happens at: https://github.com/klen/modconfig
+Development of the project happens at: https://github.com/klen/modconfig
 
 .. _license:
 
