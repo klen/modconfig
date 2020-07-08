@@ -11,6 +11,10 @@ modconfig -- Simple hierarchic configuration manager for apps
     :target: https://github.com/klen/modconfig/actions
     :alt: Tests Status
 
+.. image:: https://img.shields.io/pypi/v/modconfig
+    :target: https://pypi.org/project/modconfig/
+    :alt: PYPI Version
+
 .. _motivation:
 
 Motivation
