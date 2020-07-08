@@ -88,6 +88,38 @@ Initialize the config in your app and use it anywhere:
    assert cfg.ANY_OPTION1
 
 
+Fallbacks
+---------
+
+If you provide a several modules, `modconfig` will be using the first available:
+
+.. code:: python
+
+   from modconfig import Config
+
+   cfg = Config('myapp.config.local', 'myapp.config.production', ANY_OPTION1="VALUE")
+
+   assert cfg.DATABASE
+   assert cfg.ANY_OPTION1
+
+
+Enviroments
+-----------
+
+The module path may be set as ENV variable:
+
+.. code:: python
+
+   import os
+   from modconfig import Config
+
+   # Let's define an env var
+   os.environ['MODCONFIG'] = 'myapp.config.production'
+
+   cfg = Config('env:MODCONFIG', 'myapp.config.local')
+   assert cfg.DATABASE
+
+
 Custom Environment Variables
 ----------------------------
 

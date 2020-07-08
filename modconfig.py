@@ -41,7 +41,7 @@ def import_mod(mod, *fallback):
     while mod:
         try:
             if isinstance(mod, str):
-                if mod.startswith('ENV:'):
+                if mod.lower().startswith('env:'):
                     mod = os.environ[mod[4:]]
 
                 mod = import_module(mod)
