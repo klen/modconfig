@@ -70,7 +70,7 @@ For example you have the structure in your app:
    |  |  |- tests.py
    |  | ...
 
-See https://github.com/klen/modconfig/example for a simple reference.
+See https://github.com/klen/modconfig/tree/develop/example as a simple reference.
 
 Initialize the config in your app and use it anywhere:
 
@@ -94,7 +94,7 @@ list, etc). If value is not JSON it would be parsed as str.
 Any ENV variables which names are not contained in source module would be
 ignored.
 
-See https://github.com/klen/modconfig/tests.py for more examples.
+See https://github.com/klen/modconfig/tree/develop/tests.py for more examples.
 
 .. _bugtracker:
 
