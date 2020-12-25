@@ -11,6 +11,11 @@ def test_base(Config):
     assert cfg
     assert cfg.OPTION == 42
 
+    cfg.update(OPTION=43)
+    assert cfg.OPTION == 43
+
+    cfg.update_from_modules()
+
 
 def test_fallback(Config):
     """If the first given module is not available then next would be used."""
@@ -57,7 +62,7 @@ def test_env(Config, monkeypatch):
     assert cfg.DATABASE == {'host': 'new.com', 'user': 'admin'}
 
     monkeypatch.setenv('APP_SECRET', 'value_from_env_with_prefix')
-    cfg = Config('example.production', prefix='APP_')
+    cfg = Config('example.production', _prefix='APP_')
     assert cfg.SECRET == 'value_from_env_with_prefix'
 
 

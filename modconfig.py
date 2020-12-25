@@ -18,8 +18,9 @@ class Config:
 
     """Basic class to keep a configuration."""
 
-    def __init__(self, *mods, prefix='', update_from_env=True, **options):  # noqa
-        self.__prefix__ = prefix
+    def __init__(self, *mods, _prefix='', update_from_env=True, **options):  # noqa
+        self._prefix = _prefix
+
         if mods:
             self.update_from_modules(*mods)
 
@@ -28,15 +29,21 @@ class Config:
         if update_from_env:
             self.update_from_env()
 
-    def update(self, **options):
+    def update(self, *mods, **options):
         """Update the configuration."""
+        self.update_from_modules(*mods)
         self.__dict__.update({
             key: value for key, value in options.items()
             if not key.startswith('_')
         })
 
-    def update_from_modules(self, mod, *fallback):
+    def update_from_modules(self, *mods):
         """Load a module from the given python path or environment."""
+        try:
+            mod, *fallback = mods
+        except ValueError:
+            return
+
         fallback = list(fallback)
         while mod:
             try:
@@ -52,7 +59,7 @@ class Config:
                 logger.error('Invalid configuration module given: %s', mod)
                 mod = fallback and fallback.pop(0)
         else:
-            return False
+            return
 
         for name in dir(mod):
             if name.startswith('_'):
@@ -64,9 +71,11 @@ class Config:
 
             self.__dict__[name] = value
 
+        return True
+
     def update_from_env(self):
         """Update the configuration from environment variables."""
-        prefix_length = len(self.__prefix__)
+        prefix_length = len(self._prefix)
         for name in os.environ:
             cfgname = name[prefix_length:]
             if cfgname.startswith('_') or cfgname not in self.__dict__:
