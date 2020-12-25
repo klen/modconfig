@@ -21,14 +21,21 @@ class Config:
     def __init__(self, *mods, prefix='', update_from_env=True, **options):  # noqa
         self.__prefix__ = prefix
         if mods:
-            self.import_mods(*mods)
+            self.update_from_modules(*mods)
 
-        self.__dict__.update(options)
+        self.update(**options)
 
         if update_from_env:
             self.update_from_env()
 
-    def import_mods(self, mod, *fallback):
+    def update(self, **options):
+        """Update the configuration."""
+        self.__dict__.update({
+            key: value for key, value in options.items()
+            if not key.startswith('_')
+        })
+
+    def update_from_modules(self, mod, *fallback):
         """Load a module from the given python path or environment."""
         fallback = list(fallback)
         while mod:
