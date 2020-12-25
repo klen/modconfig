@@ -62,7 +62,7 @@ def test_env(Config, monkeypatch):
     assert cfg.DATABASE == {'host': 'new.com', 'user': 'admin'}
 
     monkeypatch.setenv('APP_SECRET', 'value_from_env_with_prefix')
-    cfg = Config('example.production', _prefix='APP_')
+    cfg = Config('example.production', prefix='APP_')
     assert cfg.SECRET == 'value_from_env_with_prefix'
 
 

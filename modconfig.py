@@ -18,8 +18,8 @@ class Config:
 
     """Basic class to keep a configuration."""
 
-    def __init__(self, *mods, _prefix='', update_from_env=True, **options):  # noqa
-        self._prefix = _prefix
+    def __init__(self, *mods, prefix='', update_from_env=True, **options):  # noqa
+        self._prefix = prefix
 
         if mods:
             self.update_from_modules(*mods)
