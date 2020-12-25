@@ -7,7 +7,7 @@ from importlib import import_module
 from inspect import isclass, isbuiltin, ismodule
 
 
-__version__ = "0.2.2"
+__version__ = "0.2.3"
 __license__ = "MIT"
 
 
