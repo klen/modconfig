@@ -1,3 +1,5 @@
+"""Modconfig to support configuration from modules."""
+
 import json
 import logging
 import os
@@ -14,7 +16,10 @@ logger = logging.getLogger('scfg')
 
 class Config:
 
-    def __init__(self, *mods, **scope):  # noqa
+    """Basic class to keep a configuration."""
+
+    def __init__(self, *mods, prefix='', update_from_env=True, **options):  # noqa
+        self.__prefix__ = prefix
         if mods:
             mod = import_mod(*mods)
             if mod:
@@ -26,12 +31,37 @@ class Config:
                     if isclass(value) or ismodule(value) or isbuiltin(value):
                         continue
 
-                    scope.setdefault(name, value)
+                    options.setdefault(name, value)
 
-        scope = update_from_env(scope)
-        self.__dict__.update(scope)
+        self.__dict__.update(options)
+
+        if update_from_env:
+            self.update_from_env()
+
+    def update_from_env(self):
+        """Update the configuration from environment variables."""
+        prefix_length = len(self.__prefix__)
+        for name in os.environ:
+            cfgname = name[prefix_length:]
+            if cfgname.startswith('__') or cfgname not in self.__dict__:
+                continue
+
+            value = os.environ[name]
+            value_type = type(self.__dict__[cfgname])
+            try:
+                value = json.loads(value)
+            except ValueError:
+                pass
+
+            try:
+                value = value_type(value)
+            except (ValueError, TypeError):
+                continue
+
+            self.__dict__[cfgname] = value
 
     def __repr__(self):
+        """Representation."""
         return "<Config %r>" % sorted(name for name in self.__dict__ if not name.startswith('_'))
 
 
@@ -53,26 +83,3 @@ def import_mod(mod, *fallback):
             mod = fallback and fallback.pop(0)
 
     return mod
-
-
-def update_from_env(scope):
-    """Update the fiven configuration scope from OS Environment."""
-    for name in os.environ:
-        if name not in scope:
-            continue
-
-        value = os.environ[name]
-        value_type = type(scope[name])
-        try:
-            value = json.loads(value)
-        except ValueError:
-            pass
-
-        try:
-            value = value_type(value)
-        except (ValueError, TypeError):
-            continue
-
-        scope[name] = value
-
-    return scope
