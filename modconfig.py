@@ -29,6 +29,10 @@ class Config:
         if update_from_env:
             self.update_from_env()
 
+    def get(self, name, default=None):
+        """Get an item from the config."""
+        return self.__dict__.get(name, default)
+
     def update(self, *mods, **options):
         """Update the configuration."""
         self.update_from_modules(*mods)
