@@ -7,7 +7,7 @@ from importlib import import_module
 from inspect import isclass, isbuiltin, ismodule
 
 
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 __license__ = "MIT"
 
 
@@ -28,6 +28,10 @@ class Config:
 
         if update_from_env:
             self.update_from_env()
+
+    def get(self, name, default=None):
+        """Get an item from the config."""
+        return self.__dict__.get(name, default)
 
     def update(self, *mods, **options):
         """Update the configuration."""

@@ -10,6 +10,8 @@ def test_base(Config):
     cfg = Config(OPTION=42)
     assert cfg
     assert cfg.OPTION == 42
+    assert cfg.get('OPTION') == 42
+    assert cfg.get('UNKNOWN', True)
 
     cfg.update(OPTION=43)
     assert cfg.OPTION == 43
