@@ -14,6 +14,7 @@ __all__ = 'Config',
 
 logger = logging.getLogger('scfg')
 identity = lambda v: v  # noqa
+types = {str, int, float, list, tuple, dict, set, bool, bytes}
 
 
 class Config:
@@ -48,10 +49,9 @@ class Config:
             if not name or name.startswith('_') or (exist_only and name not in self.__dict__):
                 continue
 
-            vtype = identity
             evalue = self.__dict__.get(name)
-            if evalue is not None:
-                vtype = type(evalue)
+            vtype = type(evalue)
+            vtype = vtype if vtype in types else identity
 
             try:
                 self.__dict__[name] = vtype(processor(value))
