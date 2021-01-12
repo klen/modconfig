@@ -4,14 +4,16 @@ import json
 import logging
 import os
 from importlib import import_module
-from inspect import isclass, isbuiltin, ismodule
+from inspect import isclass, isbuiltin, ismodule, getmembers
 
 
 __version__ = "0.3.3"
 __license__ = "MIT"
+__all__ = 'Config',
 
 
 logger = logging.getLogger('scfg')
+identity = lambda v: v  # noqa
 
 
 class Config:
@@ -36,12 +38,28 @@ class Config:
     def update(self, *mods, **options):
         """Update the configuration."""
         self.update_from_modules(*mods)
-        self.__dict__.update({
-            key: value for key, value in options.items()
-            if not key.startswith('_')
-        })
+        self.update_from_dict(options, exist_only=False)
 
-    def update_from_modules(self, *mods):
+    def update_from_dict(self, options, prefix='', exist_only=True, processor=identity):
+        """Update the configuration from given dictionary."""
+        prefix_length = len(prefix)
+        for name, value in options.items():
+            name = name[prefix_length:]
+            if not name or name.startswith('_') or (exist_only and name not in self.__dict__):
+                continue
+
+            vtype = identity
+            evalue = self.__dict__.get(name)
+            if evalue is not None:
+                vtype = type(evalue)
+
+            try:
+                self.__dict__[name] = vtype(processor(value))
+            except (ValueError, TypeError):
+                logger.warning('Invalid configuration value given for %s: %s', name, value)
+                continue
+
+    def update_from_modules(self, *mods, exist_only=False):
         """Load a module from the given python path or environment."""
         try:
             mod, *fallback = mods
@@ -65,39 +83,20 @@ class Config:
         else:
             return
 
-        for name in dir(mod):
-            if name.startswith('_'):
-                continue
-
-            value = getattr(mod, name)
-            if isclass(value) or ismodule(value) or isbuiltin(value):
-                continue
-
-            self.__dict__[name] = value
-
-        return True
+        members = getmembers(mod, lambda v: not (isclass(v) or ismodule(v) or isbuiltin(v)))
+        self.update_from_dict(dict(members), exist_only=exist_only)
 
     def update_from_env(self):
         """Update the configuration from environment variables."""
-        prefix_length = len(self._prefix)
-        for name in os.environ:
-            cfgname = name[prefix_length:]
-            if cfgname.startswith('_') or cfgname not in self.__dict__:
-                continue
 
-            value = os.environ[name]
-            value_type = type(self.__dict__[cfgname])
+        def processor(value):
             try:
-                value = json.loads(value)
+                return json.loads(value)
             except ValueError:
-                pass
+                return value
 
-            try:
-                value = value_type(value)
-            except (ValueError, TypeError):
-                continue
-
-            self.__dict__[cfgname] = value
+        self.update_from_dict(
+            dict(os.environ), prefix=self._prefix, exist_only=True, processor=processor)
 
     def __repr__(self):
         """Representation."""

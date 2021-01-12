@@ -1,7 +1,9 @@
 import pytest
 
 
-def test_base(Config):
+def test_base():
+    from modconfig import Config
+
     cfg = Config('unknown')
     assert cfg
     with pytest.raises(AttributeError):
@@ -19,13 +21,16 @@ def test_base(Config):
     cfg.update_from_modules()
 
 
-def test_fallback(Config):
+def test_fallback():
     """If the first given module is not available then next would be used."""
+    from modconfig import Config
+
     cfg = Config('example.unknown', 'example.tests', 'example.production')
     assert cfg.ENV == 'tests'
 
 
-def test_import_modules(Config):
+def test_import_modules():
+    from modconfig import Config
     from example import tests
 
     # Config accepts modules themself
@@ -42,7 +47,9 @@ def test_import_modules(Config):
     assert cfg.APP_DIR
 
 
-def test_env(Config, monkeypatch):
+def test_env(monkeypatch):
+    from modconfig import Config
+
     # Config accepts modules path from ENV variables
     monkeypatch.setenv('MODCONFIG', 'example.production')
     cfg = Config('ENV:MODCONFIG')
@@ -66,10 +73,3 @@ def test_env(Config, monkeypatch):
     monkeypatch.setenv('APP_SECRET', 'value_from_env_with_prefix')
     cfg = Config('example.production', prefix='APP_')
     assert cfg.SECRET == 'value_from_env_with_prefix'
-
-
-@pytest.fixture
-def Config():
-    from modconfig import Config as klass
-
-    return klass
