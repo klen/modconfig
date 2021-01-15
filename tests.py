@@ -20,6 +20,9 @@ def test_base():
 
     cfg.update_from_modules()
 
+    test = list(cfg)
+    assert test == [('OPTION', 43)]
+
 
 def test_update_from_dict():
     from modconfig import Config

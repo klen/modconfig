@@ -23,7 +23,7 @@ class Config:
 
     def __init__(self, *mods, prefix='', update_from_env=True, ignore_case=False, **options):  # noqa
         self._prefix = prefix
-        self.ignore_case = ignore_case
+        self._ignore_case = ignore_case
 
         if mods:
             self.update_from_modules(*mods)
@@ -32,6 +32,14 @@ class Config:
 
         if update_from_env:
             self.update_from_env()
+
+    def __repr__(self):
+        """Representation."""
+        return "<Config %r>" % sorted(name for name in self.__dict__ if not name.startswith('_'))
+
+    def __iter__(self):
+        """Iterate through self."""
+        return ((k, v) for k, v in self.__dict__.items() if not k.startswith('_'))
 
     def get(self, name, default=None):
         """Get an item from the config."""
@@ -46,7 +54,7 @@ class Config:
             self, options, /, prefix='', exist_only=True, ignore_case=None, processor=identity):
         """Update the configuration from given dictionary."""
         if ignore_case is None:
-            ignore_case = self.ignore_case
+            ignore_case = self._ignore_case
 
         prefix_length = len(prefix)
         for name, value in options.items():
@@ -114,7 +122,3 @@ class Config:
 
         self.update_from_dict(
             dict(os.environ), prefix=self._prefix, exist_only=True, processor=processor)
-
-    def __repr__(self):
-        """Representation."""
-        return "<Config %r>" % sorted(name for name in self.__dict__ if not name.startswith('_'))
