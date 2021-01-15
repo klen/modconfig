@@ -78,7 +78,7 @@ class Config:
                 break
 
             except (ImportError, KeyError):
-                logger.error('Invalid configuration module given: %s', mod)
+                logger.warning('Invalid configuration module given: %s', mod)
                 mod = fallback and fallback.pop(0)
         else:
             return
