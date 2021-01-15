@@ -56,9 +56,9 @@ class Config:
 
             key = name
             if ignore_case:
-                name = name.lower()
+                lname = name.lower()
                 for key in self.__dict__:
-                    if key.lower() == name:
+                    if key.lower() == lname:
                         break
                 else:
                     key = name

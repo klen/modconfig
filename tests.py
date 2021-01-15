@@ -24,10 +24,10 @@ def test_base():
 def test_update_from_dict():
     from modconfig import Config
 
-    cfg = Config(var1=1, var2=2)
-    cfg.update_from_dict({'CFG_VAR1': 11, 'CFG_VAR3': 33}, prefix='CFG_', ignore_case=True)
+    cfg = Config(ignore_case=True, var1=1, VAR2=2)
+    cfg.update_from_dict({'CFG_VAR1': 11, 'CFG_VAR3': 33}, prefix='CFG_')
     assert cfg.var1 == 11
-    assert cfg.var2 == 2
+    assert cfg.VAR2 == 2
     with pytest.raises(AttributeError):
         assert cfg.var3
 
