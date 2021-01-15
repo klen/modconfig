@@ -21,12 +21,15 @@ def test_base():
     cfg.update_from_modules()
 
 
-def test_fallback():
-    """If the first given module is not available then next would be used."""
+def test_update_from_dict():
     from modconfig import Config
 
-    cfg = Config('example.unknown', 'example.tests', 'example.production')
-    assert cfg.ENV == 'tests'
+    cfg = Config(var1=1, var2=2)
+    cfg.update_from_dict({'CFG_VAR1': 11, 'CFG_VAR3': 33}, prefix='CFG_', ignore_case=True)
+    assert cfg.var1 == 11
+    assert cfg.var2 == 2
+    with pytest.raises(AttributeError):
+        assert cfg.var3
 
 
 def test_import_modules():
@@ -45,6 +48,10 @@ def test_import_modules():
     assert cfg.API_KEY == 'redefined'
     assert cfg.ENV == 'tests'
     assert cfg.APP_DIR
+
+    #  If the first given module is not available then next would be used.
+    cfg = Config('example.unknown', 'example.tests', 'example.production')
+    assert cfg.ENV == 'tests'
 
 
 def test_env(monkeypatch):
@@ -73,3 +80,6 @@ def test_env(monkeypatch):
     monkeypatch.setenv('APP_SECRET', 'value_from_env_with_prefix')
     cfg = Config('example.production', prefix='APP_')
     assert cfg.SECRET == 'value_from_env_with_prefix'
+
+
+# pylama:ignore=D

@@ -21,8 +21,9 @@ class Config:
 
     """Basic class to keep a configuration."""
 
-    def __init__(self, *mods, prefix='', update_from_env=True, **options):  # noqa
+    def __init__(self, *mods, prefix='', update_from_env=True, ignore_case=False, **options):  # noqa
         self._prefix = prefix
+        self.ignore_case = ignore_case
 
         if mods:
             self.update_from_modules(*mods)
@@ -41,20 +42,36 @@ class Config:
         self.update_from_modules(*mods)
         self.update_from_dict(options, exist_only=False)
 
-    def update_from_dict(self, options, prefix='', exist_only=True, processor=identity):
+    def update_from_dict(
+            self, options, /, prefix='', exist_only=True, ignore_case=None, processor=identity):
         """Update the configuration from given dictionary."""
+        if ignore_case is None:
+            ignore_case = self.ignore_case
+
         prefix_length = len(prefix)
         for name, value in options.items():
             name = name[prefix_length:]
-            if not name or name.startswith('_') or (exist_only and name not in self.__dict__):
+            if not name or name.startswith('_'):
                 continue
 
-            evalue = self.__dict__.get(name)
+            key = name
+            if ignore_case:
+                name = name.lower()
+                for key in self.__dict__:
+                    if key.lower() == name:
+                        break
+                else:
+                    key = name
+
+            if exist_only and key not in self.__dict__:
+                continue
+
+            evalue = self.__dict__.get(key)
             vtype = type(evalue)
             vtype = vtype if vtype in types else identity
 
             try:
-                self.__dict__[name] = vtype(processor(value))
+                self.__dict__[key] = vtype(processor(value))
             except (ValueError, TypeError):
                 logger.warning('Invalid configuration value given for %s: %s', name, value)
                 continue
