@@ -105,11 +105,13 @@ class Config:
             except (ImportError, KeyError):
                 logger.warning('Invalid configuration module given: %s', mod)
                 mod = fallback and fallback.pop(0)
+
         else:
             return
 
         members = getmembers(mod, lambda v: not (isclass(v) or ismodule(v) or isbuiltin(v)))
         self.update_from_dict(dict(members), exist_only=exist_only)
+        return mod.__name__
 
     def update_from_env(self):
         """Update the configuration from environment variables."""

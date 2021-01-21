@@ -3,7 +3,7 @@ modconfig
 
 .. _description:
 
-modconfig -- Simple hierarchic configuration manager for apps
+**modconfig** -- Simple hierarchic configuration manager for apps
 
 .. _badges:
 

@@ -18,7 +18,8 @@ def test_base():
     cfg.update(OPTION=43)
     assert cfg.OPTION == 43
 
-    cfg.update_from_modules()
+    test = cfg.update_from_modules()
+    assert not test
 
     test = list(cfg)
     assert test == [('OPTION', 43)]
@@ -53,7 +54,8 @@ def test_import_modules():
     assert cfg.APP_DIR
 
     #  If the first given module is not available then next would be used.
-    cfg = Config('example.unknown', 'example.tests', 'example.production')
+    mod = cfg.update_from_modules('example.unknown', 'example.tests', 'example.production')
+    assert mod == 'example.tests'
     assert cfg.ENV == 'tests'
 
 

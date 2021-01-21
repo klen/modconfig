@@ -47,6 +47,5 @@ upload: clean
 
 .PHONY: test
 test t:
-	@pip install pytest
-	@pip install -e $(CURDIR)
+	@pip install -e .[tests]
 	@pytest tests.py
