@@ -9,7 +9,7 @@ from inspect import isclass, isbuiltin, ismodule, getmembers
 from types import ModuleType
 
 
-__version__ = "0.7.1"
+__version__ = "0.8.0"
 __license__ = "MIT"
 __all__ = 'Config',
 
