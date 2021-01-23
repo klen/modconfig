@@ -3,8 +3,10 @@
 import json
 import logging
 import os
+import typing as t
 from importlib import import_module
 from inspect import isclass, isbuiltin, ismodule, getmembers
+from types import ModuleType
 
 
 __version__ = "0.7.1"
@@ -12,16 +14,17 @@ __license__ = "MIT"
 __all__ = 'Config',
 
 
-logger = logging.getLogger('scfg')
-identity = lambda v: v  # noqa
-types = {str, int, float, list, tuple, dict, set, bool, bytes}
+logger: logging.Logger = logging.getLogger('scfg')
+identity: t.Callable = lambda v: v  # noqa
+types: t.Set = {str, int, float, list, tuple, dict, set, bool, bytes}
 
 
 class Config:
-
     """Basic class to keep a configuration."""
 
-    def __init__(self, *mods, prefix='', update_from_env=True, ignore_case=False, **options):  # noqa
+    def __init__(
+            self, *mods: t.Union[str, ModuleType], prefix: str = '', update_from_env: bool = True,
+            ignore_case: bool = False, **options):  # noqa
         self._prefix = prefix
         self._ignore_case = ignore_case
 
@@ -33,25 +36,26 @@ class Config:
         if update_from_env:
             self.update_from_env()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Representation."""
         return "<Config %r>" % sorted(name for name in self.__dict__ if not name.startswith('_'))
 
-    def __iter__(self):
+    def __iter__(self) -> t.Iterator:
         """Iterate through self."""
         return ((k, v) for k, v in self.__dict__.items() if not k.startswith('_'))
 
-    def get(self, name, default=None):
+    def get(self, name: str, default: t.Any = None) -> t.Any:
         """Get an item from the config."""
         return self.__dict__.get(name, default)
 
-    def update(self, *mods, **options):
+    def update(self, *mods: t.Union[str, ModuleType], **options):
         """Update the configuration."""
         self.update_from_modules(*mods)
         self.update_from_dict(options, exist_only=False)
 
     def update_from_dict(
-            self, options, /, prefix='', exist_only=True, ignore_case=None, processor=identity):
+            self, options: t.Mapping, /, prefix: str = '', exist_only: bool = True,
+            ignore_case: bool = None, processor: t.Callable = identity):
         """Update the configuration from given dictionary."""
         if ignore_case is None:
             ignore_case = self._ignore_case
@@ -76,20 +80,21 @@ class Config:
 
             evalue = self.__dict__.get(key)
             vtype = type(evalue)
-            vtype = vtype if vtype in types else identity
+            type_processor = vtype if vtype in types else identity
 
             try:
-                self.__dict__[key] = vtype(processor(value))
+                self.__dict__[key] = type_processor(processor(value))  # type: ignore
             except (ValueError, TypeError):
                 logger.warning('Invalid configuration value given for %s: %s', name, value)
                 continue
 
-    def update_from_modules(self, *mods, exist_only=False):
+    def update_from_modules(
+            self, *mods: t.Union[str, ModuleType], exist_only: bool = False) -> t.Optional[str]:
         """Load a module from the given python path or environment."""
         try:
             mod, *fallback = mods
         except ValueError:
-            return
+            return None
 
         fallback = list(fallback)
         while mod:
@@ -104,10 +109,10 @@ class Config:
 
             except (ImportError, KeyError):
                 logger.warning('Invalid configuration module given: %s', mod)
-                mod = fallback and fallback.pop(0)
+                mod = fallback and fallback.pop(0)  # type: ignore
 
         else:
-            return
+            return None
 
         members = getmembers(mod, lambda v: not (isclass(v) or ismodule(v) or isbuiltin(v)))
         self.update_from_dict(dict(members), exist_only=exist_only)
