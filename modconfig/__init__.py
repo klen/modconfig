@@ -22,14 +22,13 @@ types: t.Set = {str, int, float, list, tuple, dict, set, bool, bytes}
 class Config:
     """Basic class to keep a configuration."""
 
-    __slots__ = 'prefix', 'ignore_case', 'storage'
+    __slots__ = '__prefix', '__storage'
 
     def __init__(
-            self, *mods: t.Union[str, ModuleType], prefix: str = '', update_from_env: bool = True,
-            ignore_case: bool = False, **options):  # noqa
-        self.storage: t.Dict[str, object] = {}
-        self.prefix: str = prefix
-        self.ignore_case: bool = ignore_case
+            self, *mods: t.Union[str, ModuleType], prefix: str = '',
+            update_from_env: bool = True, **options):  # noqa
+        self.__storage: t.Dict[str, object] = {}
+        self.__prefix: str = prefix
 
         if mods:
             self.update_from_modules(*mods)
@@ -41,22 +40,26 @@ class Config:
 
     def __repr__(self) -> str:
         """Representation."""
-        return "<Config %r>" % sorted(name for name in self.storage if not name.startswith('_'))
+        return "<Config %r>" % self.__storage
 
     def __iter__(self) -> t.Iterator:
         """Iterate through self."""
-        return ((k, v) for k, v in self.storage.items() if not k.startswith('_'))
+        return iter(self.__storage.items())
 
     def __getattr__(self, name: str):
         """Proxy attributes to self storage."""
         try:
-            return self.storage[name]
+            return self.__storage[name.title()]
         except KeyError:
             raise AttributeError(f'Invalid option: {name}')
 
-    def get(self, name: str, default: t.Any = None) -> t.Any:
+    def __getitem__(self, name: str):
+        """Proxy attributes to self storage."""
+        return self.__storage[name.title()]
+
+    def get(self, name: str, default: object = None) -> object:
         """Get an item from the config."""
-        return self.storage.get(name, default)
+        return self.__storage.get(name.title(), default)
 
     def update(self, *mods: t.Union[str, ModuleType], **options):
         """Update the configuration."""
@@ -65,35 +68,26 @@ class Config:
 
     def update_from_dict(
             self, options: t.Mapping, /, prefix: str = '', exist_only: bool = True,
-            ignore_case: bool = None, processor: t.Callable = identity):
+            processor: t.Callable = identity):
         """Update the configuration from given dictionary."""
-        if ignore_case is None:
-            ignore_case = self.ignore_case
-
         prefix_length = len(prefix)
         for name, value in options.items():
             name = name[prefix_length:]
             if not name or name.startswith('_'):
                 continue
 
-            key = name
-            if ignore_case:
-                lname = name.lower()
-                for key in self.storage:
-                    if key.lower() == lname:
-                        break
-                else:
-                    key = name
-
-            if exist_only and key not in self.storage:
-                continue
-
-            evalue = self.storage.get(key)
-            vtype = type(evalue)
-            type_processor = vtype if vtype in types else identity
+            name = name.title()
+            type_processor = identity
+            try:
+                evalue = self.__storage[name]
+                vtype: t.Callable = type(evalue)
+                type_processor = vtype if vtype in types else type_processor
+            except KeyError:
+                if exist_only:
+                    continue
 
             try:
-                self.storage[key] = type_processor(processor(value))  # type: ignore
+                self.__storage[name] = type_processor(processor(value))  # type: ignore
             except (ValueError, TypeError):
                 logger.warning('Invalid configuration value given for %s: %s', name, value)
                 continue
@@ -138,4 +132,4 @@ class Config:
                 return value
 
         self.update_from_dict(
-            dict(os.environ), prefix=self.prefix, exist_only=True, processor=processor)
+            dict(os.environ), prefix=self.__prefix, exist_only=True, processor=processor)

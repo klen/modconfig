@@ -22,7 +22,7 @@ def test_base():
     assert not test
 
     test = list(cfg)
-    assert test == [('OPTION', 43)]
+    assert test == [('Option', 43)]
 
 
 def test_update_from_dict():
