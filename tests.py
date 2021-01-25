@@ -53,6 +53,9 @@ def test_import_modules():
     assert cfg.ENV == 'tests'
     assert cfg.APP_DIR
 
+    mod = cfg.update_from_modules('example.unknown')
+    assert not mod
+
     #  If the first given module is not available then next would be used.
     mod = cfg.update_from_modules('example.unknown', 'example.tests', 'example.production')
     assert mod == 'example.tests'
