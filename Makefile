@@ -46,7 +46,7 @@ upload: clean
 
 
 .PHONY: test
-test t:
+test:
 	@pip install -e .[tests]
 	@pytest tests.py
 
@@ -55,3 +55,8 @@ test t:
 mypy:
 	@pip install -e .[tests]
 	@mypy modconfig
+
+
+.PHONY: t
+t:
+	make mypy test

@@ -22,11 +22,14 @@ types: t.Set = {str, int, float, list, tuple, dict, set, bool, bytes}
 class Config:
     """Basic class to keep a configuration."""
 
+    __slots__ = 'prefix', 'ignore_case', 'storage'
+
     def __init__(
             self, *mods: t.Union[str, ModuleType], prefix: str = '', update_from_env: bool = True,
             ignore_case: bool = False, **options):  # noqa
-        self._prefix = prefix
-        self._ignore_case = ignore_case
+        self.storage: t.Dict[str, object] = {}
+        self.prefix: str = prefix
+        self.ignore_case: bool = ignore_case
 
         if mods:
             self.update_from_modules(*mods)
@@ -38,15 +41,22 @@ class Config:
 
     def __repr__(self) -> str:
         """Representation."""
-        return "<Config %r>" % sorted(name for name in self.__dict__ if not name.startswith('_'))
+        return "<Config %r>" % sorted(name for name in self.storage if not name.startswith('_'))
 
     def __iter__(self) -> t.Iterator:
         """Iterate through self."""
-        return ((k, v) for k, v in self.__dict__.items() if not k.startswith('_'))
+        return ((k, v) for k, v in self.storage.items() if not k.startswith('_'))
+
+    def __getattr__(self, name: str):
+        """Proxy attributes to self storage."""
+        try:
+            return self.storage[name]
+        except KeyError:
+            raise AttributeError(f'Invalid option: {name}')
 
     def get(self, name: str, default: t.Any = None) -> t.Any:
         """Get an item from the config."""
-        return self.__dict__.get(name, default)
+        return self.storage.get(name, default)
 
     def update(self, *mods: t.Union[str, ModuleType], **options):
         """Update the configuration."""
@@ -58,7 +68,7 @@ class Config:
             ignore_case: bool = None, processor: t.Callable = identity):
         """Update the configuration from given dictionary."""
         if ignore_case is None:
-            ignore_case = self._ignore_case
+            ignore_case = self.ignore_case
 
         prefix_length = len(prefix)
         for name, value in options.items():
@@ -69,21 +79,21 @@ class Config:
             key = name
             if ignore_case:
                 lname = name.lower()
-                for key in self.__dict__:
+                for key in self.storage:
                     if key.lower() == lname:
                         break
                 else:
                     key = name
 
-            if exist_only and key not in self.__dict__:
+            if exist_only and key not in self.storage:
                 continue
 
-            evalue = self.__dict__.get(key)
+            evalue = self.storage.get(key)
             vtype = type(evalue)
             type_processor = vtype if vtype in types else identity
 
             try:
-                self.__dict__[key] = type_processor(processor(value))  # type: ignore
+                self.storage[key] = type_processor(processor(value))  # type: ignore
             except (ValueError, TypeError):
                 logger.warning('Invalid configuration value given for %s: %s', name, value)
                 continue
@@ -128,4 +138,4 @@ class Config:
                 return value
 
         self.update_from_dict(
-            dict(os.environ), prefix=self._prefix, exist_only=True, processor=processor)
+            dict(os.environ), prefix=self.prefix, exist_only=True, processor=processor)
