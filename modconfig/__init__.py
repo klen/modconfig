@@ -46,20 +46,25 @@ class Config:
         """Iterate through self."""
         return iter(self.__storage.items())
 
-    def __getattr__(self, name: str):
+    def __getattr__(self, name: str) -> object:
         """Proxy attributes to self storage."""
         try:
-            return self.__storage[name.title()]
+            return self.__storage[name.upper()]
         except KeyError:
             raise AttributeError(f'Invalid option: {name}')
 
-    def __getitem__(self, name: str):
+    def __getitem__(self, name: str) -> object:
         """Proxy attributes to self storage."""
-        return self.__storage[name.title()]
+        return self.__storage[name.upper()]
+
+    @property
+    def prefix(self) -> str:
+        """Return self prefix."""
+        return self.__prefix
 
     def get(self, name: str, default: object = None) -> object:
         """Get an item from the config."""
-        return self.__storage.get(name.title(), default)
+        return self.__storage.get(name.upper(), default)
 
     def update(self, *mods: t.Union[str, ModuleType], **options):
         """Update the configuration."""
@@ -76,7 +81,7 @@ class Config:
             if not name or name.startswith('_'):
                 continue
 
-            name = name.title()
+            name = name.upper()
             type_processor = identity
             try:
                 evalue = self.__storage[name]

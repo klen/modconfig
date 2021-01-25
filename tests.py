@@ -4,8 +4,9 @@ import pytest
 def test_base():
     from modconfig import Config
 
-    cfg = Config('unknown')
+    cfg = Config('unknown', prefix='CONFIG')
     assert cfg
+    assert cfg.prefix == 'CONFIG'
     with pytest.raises(AttributeError):
         cfg.UNKNOWN
 
@@ -22,7 +23,7 @@ def test_base():
     assert not test
 
     test = list(cfg)
-    assert test == [('Option', 43)]
+    assert test == [('OPTION', 43)]
 
 
 def test_update_from_dict():
