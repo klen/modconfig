@@ -72,7 +72,7 @@ class Config:
         self.update_from_dict(options, exist_only=False)
 
     def update_from_dict(
-            self, options: t.Mapping, /, prefix: str = '', exist_only: bool = True,
+            self, options: t.Mapping, *, prefix: str = '', exist_only: bool = True,
             processor: t.Callable = identity):
         """Update the configuration from given dictionary."""
         prefix_length = len(prefix)

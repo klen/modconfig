@@ -44,7 +44,7 @@ flexability and make your configuration very declarative without any magic.
 Requirements
 =============
 
-- python >= 3.4
+- python >= 3.7
 
 .. _installation:
 
