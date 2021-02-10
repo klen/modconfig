@@ -95,7 +95,7 @@ class Config:
 
             else:
                 if not vtype:
-                    vtype = vtype or type(value) if value is not None else identity
+                    vtype = vtype or type(value) if value is not None and not callable(value) else identity  # noqa
 
                 self.__annotations[name] = vtype
 
@@ -105,7 +105,7 @@ class Config:
                     value = vtype(value)
                 self.__storage[name] = value
             except (ValueError, TypeError):
-                logger.debug('Invalid configuration value given for %s: %s', name, value)
+                logger.warning('Invalid configuration value given for %s: %s', name, value)
                 continue
 
     def update_from_modules(
@@ -128,7 +128,7 @@ class Config:
                 break
 
             except (ImportError, KeyError):
-                logger.warning('Invalid configuration module given: %s', mod)
+                logger.debug('Invalid configuration module given: %s', mod)
                 mod = fallback.pop(0) if fallback else ''
 
         else:

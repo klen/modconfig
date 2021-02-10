@@ -25,6 +25,9 @@ def test_base():
     test = list(cfg)
     assert test == [('OPTION', 43)]
 
+    cfg.update(fn=lambda: 42)
+    assert cfg.FN() == 42
+
 
 def test_update_from_dict():
     from modconfig import Config
