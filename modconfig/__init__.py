@@ -3,7 +3,6 @@
 from importlib import import_module
 from inspect import isclass, isbuiltin, ismodule, getmembers
 from types import ModuleType
-import decimal
 import json
 import logging
 import os
@@ -106,7 +105,7 @@ class Config:
                     value = vtype(value)
                 self.__storage[name] = value
             except (ValueError, TypeError):
-                logger.warning('Invalid configuration value given for %s: %s', name, value)
+                logger.debug('Invalid configuration value given for %s: %s', name, value)
                 continue
 
     def update_from_modules(
@@ -135,7 +134,6 @@ class Config:
         else:
             return None
 
-        annotations = t.get_type_hints(mod)
         members = getmembers(mod, lambda v: not (isclass(v) or ismodule(v) or isbuiltin(v)))
         self.update_from_dict(
             dict(members), exist_only=exist_only, annotations=t.get_type_hints(mod))
