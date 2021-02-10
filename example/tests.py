@@ -1,3 +1,5 @@
 from .defaults import *  # noqa
 
-ENV = 'tests'
+ENV: str = 'tests'
+
+LIMIT: float = None

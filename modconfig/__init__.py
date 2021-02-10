@@ -1,12 +1,13 @@
 """Modconfig to support configuration from modules."""
 
+from importlib import import_module
+from inspect import isclass, isbuiltin, ismodule, getmembers
+from types import ModuleType
+import decimal
 import json
 import logging
 import os
 import typing as t
-from importlib import import_module
-from inspect import isclass, isbuiltin, ismodule, getmembers
-from types import ModuleType
 
 
 __version__ = "0.12.0"
@@ -16,18 +17,18 @@ __all__ = 'Config',
 
 logger: logging.Logger = logging.getLogger('scfg')
 identity: t.Callable = lambda v: v  # noqa
-types: t.Set = {str, int, float, list, tuple, dict, set, bool, bytes}
 
 
 class Config:
     """Basic class to keep a configuration."""
 
-    __slots__ = '__prefix', '__storage'
+    __slots__ = '__prefix', '__storage', '__annotations'
 
     def __init__(
             self, *mods: t.Union[str, ModuleType], prefix: str = '',
             update_from_env: bool = True, **options):  # noqa
         self.__storage: t.Dict[str, object] = {}
+        self.__annotations: t.Dict[str, t.Callable] = {}
         self.__prefix: str = prefix
 
         if mods:
@@ -73,26 +74,37 @@ class Config:
 
     def update_from_dict(
             self, options: t.Mapping, *, prefix: str = '', exist_only: bool = True,
-            processor: t.Callable = identity):
+            processor: t.Callable = identity, annotations: t.Dict = None):
         """Update the configuration from given dictionary."""
         prefix_length = len(prefix)
+        annotations = annotations or {}
         for name, value in options.items():
+            vtype = annotations.get(name)
             name = name[prefix_length:]
             if not name or name.startswith('_'):
                 continue
 
             name = name.upper()
-            type_processor = identity
-            try:
-                evalue = self.__storage[name]
-                vtype: t.Callable = type(evalue)
-                type_processor = vtype if vtype in types else type_processor
-            except KeyError:
-                if exist_only:
-                    continue
+            if exist_only and name not in self.__storage:
+                continue
+
+            if name in self.__storage:
+                vtype = self.__annotations[name]
+
+            elif exist_only:
+                continue
+
+            else:
+                if not vtype:
+                    vtype = vtype or type(value) if value is not None else identity
+
+                self.__annotations[name] = vtype
 
             try:
-                self.__storage[name] = type_processor(processor(value))  # type: ignore
+                value = processor(value)
+                if value is not None:
+                    value = vtype(value)
+                self.__storage[name] = value
             except (ValueError, TypeError):
                 logger.warning('Invalid configuration value given for %s: %s', name, value)
                 continue
@@ -123,8 +135,10 @@ class Config:
         else:
             return None
 
+        annotations = t.get_type_hints(mod)
         members = getmembers(mod, lambda v: not (isclass(v) or ismodule(v) or isbuiltin(v)))
-        self.update_from_dict(dict(members), exist_only=exist_only)
+        self.update_from_dict(
+            dict(members), exist_only=exist_only, annotations=t.get_type_hints(mod))
         return mod.__name__
 
     def update_from_env(self):

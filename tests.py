@@ -45,14 +45,19 @@ def test_import_modules():
     cfg = Config(tests)
     assert cfg
     assert cfg.SECRET == 'unsecure'
+    assert cfg.LIMIT is None
 
     # Config accepts modules import path
     cfg = Config('example.tests', API_KEY='redefined')
     assert cfg
-    assert cfg.SECRET == 'unsecure'
     assert cfg.API_KEY == 'redefined'
-    assert cfg.ENV == 'tests'
     assert cfg.APP_DIR
+    assert cfg.ENV == 'tests'
+    assert cfg.LIMIT is None
+    assert cfg.SECRET == 'unsecure'
+
+    cfg.update_from_dict({'limit': '0.22'})
+    assert cfg.LIMIT == 0.22
 
     mod = cfg.update_from_modules('example.unknown')
     assert not mod

@@ -51,6 +51,12 @@ test:
 	@pytest tests.py
 
 
+.PHONY: mypy
+mypy:
+	@pip install -e .[tests]
+	@mypy modconfig
+
+
 .PHONY: t
 t:
 	make test
