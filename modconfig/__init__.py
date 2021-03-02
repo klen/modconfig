@@ -24,18 +24,18 @@ class Config:
     __slots__ = '__prefix', '__storage', '__annotations'
 
     def __init__(
-            self, *mods: t.Union[str, ModuleType], prefix: str = '',
-            update_from_env: bool = True, **options):  # noqa
+            self, *mods: t.Union[str, ModuleType], config_prefix: str = '',
+            config_update_from_env: bool = True, **options):  # noqa
         self.__storage: t.Dict[str, object] = {}
         self.__annotations: t.Dict[str, t.Callable] = {}
-        self.__prefix: str = prefix
+        self.__prefix: str = config_prefix
 
         if mods:
             self.update_from_modules(*mods)
 
         self.update(**options)
 
-        if update_from_env:
+        if config_update_from_env:
             self.update_from_env()
 
     def __repr__(self) -> str:
@@ -72,10 +72,10 @@ class Config:
         self.update_from_dict(options, exist_only=False)
 
     def update_from_dict(
-            self, options: t.Mapping, *, prefix: str = '', exist_only: bool = True,
+            self, options: t.Mapping, *, config_prefix: str = '', exist_only: bool = True,
             processor: t.Callable = identity, annotations: t.Dict = None):
         """Update the configuration from given dictionary."""
-        prefix_length = len(prefix)
+        prefix_length = len(config_prefix)
         annotations = annotations or {}
         for name, value in options.items():
             vtype = annotations.get(name)
@@ -149,4 +149,4 @@ class Config:
                 return value
 
         self.update_from_dict(
-            dict(os.environ), prefix=self.__prefix, exist_only=True, processor=processor)
+            dict(os.environ), config_prefix=self.__prefix, exist_only=True, processor=processor)

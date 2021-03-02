@@ -4,7 +4,7 @@ import pytest
 def test_base():
     from modconfig import Config
 
-    cfg = Config('unknown', prefix='CONFIG')
+    cfg = Config('unknown', config_prefix='CONFIG')
     assert cfg
     assert cfg.prefix == 'CONFIG'
     with pytest.raises(AttributeError):
@@ -33,7 +33,7 @@ def test_update_from_dict():
     from modconfig import Config
 
     cfg = Config(ignore_case=True, var1=1, VAR2=2)
-    cfg.update_from_dict({'CFG_VAR1': 11, 'CFG_VAR3': 33}, prefix='CFG_')
+    cfg.update_from_dict({'CFG_VAR1': 11, 'CFG_VAR3': 33}, config_prefix='CFG_')
     assert cfg.var1 == 11
     assert cfg.VAR2 == 2
     with pytest.raises(AttributeError):
@@ -95,7 +95,7 @@ def test_env(monkeypatch):
     assert cfg.DATABASE == {'host': 'new.com', 'user': 'admin'}
 
     monkeypatch.setenv('APP_SECRET', 'value_from_env_with_prefix')
-    cfg = Config('example.production', prefix='APP_')
+    cfg = Config('example.production', config_prefix='APP_')
     assert cfg.SECRET == 'value_from_env_with_prefix'
 
 
