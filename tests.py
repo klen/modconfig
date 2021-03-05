@@ -6,7 +6,7 @@ def test_base():
 
     cfg = Config('unknown', config_prefix='CONFIG')
     assert cfg
-    assert cfg.prefix == 'CONFIG'
+    assert cfg._prefix == 'CONFIG'
     with pytest.raises(AttributeError):
         cfg.UNKNOWN
 

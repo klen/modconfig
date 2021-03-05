@@ -21,14 +21,14 @@ identity: t.Callable = lambda v: v  # noqa
 class Config:
     """Basic class to keep a configuration."""
 
-    __slots__ = '__prefix', '__storage', '__annotations'
+    __slots__ = '_prefix', '__storage', '__annotations'
 
     def __init__(
             self, *mods: t.Union[str, ModuleType], config_prefix: str = '',
             config_update_from_env: bool = True, **options):  # noqa
         self.__storage: t.Dict[str, object] = {}
         self.__annotations: t.Dict[str, t.Callable] = {}
-        self.__prefix: str = config_prefix
+        self._prefix: str = config_prefix
 
         if mods:
             self.update_from_modules(*mods)
@@ -60,11 +60,6 @@ class Config:
     def get(self, name: str, default: object = None) -> t.Any:
         """Get an item from the config."""
         return self.__storage.get(name.upper(), default)
-
-    @property
-    def prefix(self) -> str:
-        """Return self prefix."""
-        return self.__prefix
 
     def update(self, *mods: t.Union[str, ModuleType], **options):
         """Update the configuration."""
@@ -149,4 +144,4 @@ class Config:
                 return value
 
         self.update_from_dict(
-            dict(os.environ), config_prefix=self.__prefix, exist_only=True, processor=processor)
+            dict(os.environ), config_prefix=self._prefix, exist_only=True, processor=processor)
