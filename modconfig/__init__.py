@@ -9,7 +9,7 @@ import os
 import typing as t
 
 
-__version__ = "0.15.0"
+__version__ = "0.15.1"
 __license__ = "MIT"
 __all__ = 'Config',
 
