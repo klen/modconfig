@@ -4,9 +4,9 @@ import pytest
 def test_base():
     from modconfig import Config
 
-    cfg = Config('unknown', config_prefix='CONFIG')
+    cfg = Config('unknown', config_config=dict(env_prefix='CONFIG'))
     assert cfg
-    assert cfg._prefix == 'CONFIG'
+    assert cfg._Config__env_prefix == 'CONFIG'
     with pytest.raises(AttributeError):
         cfg.UNKNOWN
 
@@ -33,7 +33,7 @@ def test_update_from_dict():
     from modconfig import Config
 
     cfg = Config(ignore_case=True, var1=1, VAR2=2)
-    cfg.update_from_dict({'CFG_VAR1': 11, 'CFG_VAR3': 33}, config_prefix='CFG_')
+    cfg.update_from_dict({'CFG_VAR1': 11, 'CFG_VAR3': 33}, prefix='CFG_')
     assert cfg.var1 == 11
     assert cfg.VAR2 == 2
     with pytest.raises(AttributeError):
@@ -95,8 +95,10 @@ def test_env(monkeypatch):
     assert cfg.DATABASE == {'host': 'new.com', 'user': 'admin'}
 
     monkeypatch.setenv('APP_SECRET', 'value_from_env_with_prefix')
-    cfg = Config('example.production', config_prefix='APP_')
+    monkeypatch.setenv('DEMOENV', 'ignore_me')
+    cfg = Config('example.production', config_config=dict(env_prefix='APP_'))
     assert cfg.SECRET == 'value_from_env_with_prefix'
+    assert cfg.ENV == 'production'
 
 
 # pylama:ignore=D
