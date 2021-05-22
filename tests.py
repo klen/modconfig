@@ -49,6 +49,7 @@ def test_import_modules():
     assert cfg
     assert cfg.SECRET == 'unsecure'
     assert cfg.LIMIT is None
+    assert cfg.API_TOKEN_EXPIRE
 
     # Config accepts modules import path
     cfg = Config('example.tests', API_KEY='redefined')

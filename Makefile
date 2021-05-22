@@ -32,18 +32,6 @@ clean:
 	find $(CURDIR) -name "*.orig" -delete
 	find $(CURDIR)/$(MODULE) -name "__pycache__" | xargs rm -rf
 
-.PHONY: register
-# target: register - Register module on PyPi
-register:
-	@python setup.py register
-
-.PHONY: upload
-# target: upload - Upload module on PyPi
-upload: clean
-	@pip install twine wheel
-	@python setup.py bdist_wheel
-	@twine upload dist/*
-
 
 .PHONY: test
 test:

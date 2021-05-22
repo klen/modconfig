@@ -16,6 +16,7 @@ __all__ = 'Config',
 
 logger: logging.Logger = logging.getLogger('scfg')
 identity: t.Callable = lambda v: v  # noqa
+types_supported = {int, float, bool, str, bytes, object, list, tuple, dict}
 
 
 class Config:
@@ -103,7 +104,8 @@ class Config:
 
             else:
                 if not vtype:
-                    vtype = vtype or type(value) if value is not None and not callable(value) else identity  # noqa
+                    vtype = type(value)
+                    vtype = identity if vtype not in types_supported else vtype
 
                 self.__annotations[name] = vtype
 
