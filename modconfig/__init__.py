@@ -115,7 +115,8 @@ class Config:
                     value = vtype(value)
                 self.__storage[name] = value
             except (ValueError, TypeError):
-                logger.warning('Invalid configuration value given for %s: %s', name, value)
+                logger.warning(
+                    'Ignored invalid configuration value given for %s: %s', name, value)
                 continue
 
     def update_from_modules(
@@ -138,7 +139,7 @@ class Config:
                 break
 
             except (ImportError, KeyError):
-                logger.debug('Invalid configuration module given: %s', mod)
+                logger.debug('Ignore invalid configuration module given: %s', mod)
                 mod = fallback.pop(0) if fallback else ''
 
         else:
