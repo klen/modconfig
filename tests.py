@@ -39,6 +39,10 @@ def test_update_from_dict():
     with pytest.raises(AttributeError):
         assert cfg.var3
 
+    cfg = Config(VAR=42)
+    cfg.update_from_dict({'CFG_VAR': 11, 'VAR': 22}, prefix='CFG_')
+    assert cfg.var == 11
+
 
 def test_import_modules():
     from modconfig import Config

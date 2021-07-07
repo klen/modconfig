@@ -87,7 +87,10 @@ class Config:
         for name, value in options.items():
             vtype = annotations.get(name)
             name = name.upper()
-            if prefix and name.startswith(prefix):
+            if prefix:
+                if not name.startswith(prefix):
+                    continue
+
                 name = name[prefix_length:]
 
             if not name or name.startswith('_'):
