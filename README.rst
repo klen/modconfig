@@ -82,7 +82,13 @@ Initialize the config in your app and use it anywhere:
 
    from modconfig import Config
 
-   cfg = Config('myapp.config.production', ANY_OPTION1="VALUE", ANY_OPTION2="VALUE")  # instead an import path it could be the module itself
+   cfg = Config(
+
+    # instead an import path it could be the module itself
+    'myapp.config.production',
+
+    # Override any options
+    ANY_OPTION1="VALUE", ANY_OPTION2="VALUE")  
 
    assert cfg.DATABASE
    assert cfg.ANY_OPTION1

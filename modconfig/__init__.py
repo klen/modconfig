@@ -1,20 +1,19 @@
 """Modconfig to support configuration from modules."""
 
-from importlib import import_module
-from inspect import isclass, isbuiltin, ismodule, getmembers
-from types import ModuleType
 import json
 import logging
 import os
 import typing as t
-
+from importlib import import_module
+from inspect import getmembers, isbuiltin, isclass, ismodule
+from types import ModuleType
 
 __version__ = "1.2.0"
 __license__ = "MIT"
-__all__ = 'Config',
+__all__ = ("Config",)
 
 
-logger: logging.Logger = logging.getLogger('scfg')
+logger: logging.Logger = logging.getLogger("scfg")
 identity: t.Callable = lambda v: v  # noqa
 types_supported = {int, float, bool, str, bytes, object, list, tuple, dict}
 
@@ -23,9 +22,11 @@ class Config:
 
     """Basic class to keep a configuration."""
 
-    __slots__ = '__env_prefix', '__storage', '__annotations'
+    __slots__ = "__env_prefix", "__storage", "__annotations"
 
-    def __init__(self, *mods: t.Union[str, ModuleType], config_config: t.Dict = None, **options):
+    def __init__(
+        self, *mods: t.Union[str, ModuleType], config_config: t.Dict = None, **options
+    ):
         """Initialize the config.
 
         :param config_config: A dictionary with config's options
@@ -39,14 +40,14 @@ class Config:
 
         self.__storage: t.Dict[str, object] = {}
         self.__annotations: t.Dict[str, t.Callable] = {}
-        self.__env_prefix: str = opts.get('env_prefix', '')
+        self.__env_prefix: str = opts.get("env_prefix", "")
 
         if mods:
             self.update_from_modules(*mods)
 
         self.update(**options)
 
-        if opts.get('update_from_env', True):
+        if opts.get("update_from_env", True):
             self.update_from_env()
 
     def __repr__(self) -> str:
@@ -62,7 +63,7 @@ class Config:
         try:
             return self.__storage[name.upper()]
         except KeyError:
-            raise AttributeError(f'Invalid option: {name}')
+            raise AttributeError(f"Invalid option: {name}")
 
     def __getitem__(self, name: str) -> t.Any:
         """Proxy attributes to self storage."""
@@ -78,8 +79,14 @@ class Config:
         self.update_from_dict(options, exist_only=False)
 
     def update_from_dict(
-            self, options: t.Mapping, *, exist_only: bool = True, prefix: str = '',
-            processor: t.Callable = identity, annotations: t.Dict = None):
+        self,
+        options: t.Mapping,
+        *,
+        exist_only: bool = True,
+        prefix: str = "",
+        processor: t.Callable = identity,
+        annotations: t.Dict = None,
+    ):
         """Update the configuration from given dictionary."""
         annotations = annotations or {}
         prefix = prefix.upper()
@@ -93,7 +100,7 @@ class Config:
 
                 name = name[prefix_length:]
 
-            if not name or name.startswith('_'):
+            if not name or name.startswith("_"):
                 continue
 
             if exist_only and name not in self.__storage:
@@ -108,8 +115,12 @@ class Config:
             else:
                 if not vtype:
                     vtype = type(value)
-                    vtype = identity if vtype not in types_supported else vtype
 
+                vtype = (
+                    vtype
+                    if vtype in types_supported and getattr(vtype, "_inst", True)
+                    else identity
+                )
                 self.__annotations[name] = vtype
 
             try:
@@ -119,11 +130,13 @@ class Config:
                 self.__storage[name] = value
             except (ValueError, TypeError):
                 logger.warning(
-                    'Ignored invalid configuration value given for %s: %s', name, value)
+                    "Ignored invalid configuration value given for %s: %s", name, value
+                )
                 continue
 
     def update_from_modules(
-            self, *mods: t.Union[str, ModuleType], exist_only: bool = False) -> t.Optional[str]:
+        self, *mods: t.Union[str, ModuleType], exist_only: bool = False
+    ) -> t.Optional[str]:
         """Load a module from the given python path or environment."""
         try:
             mod, *fallback = mods
@@ -134,7 +147,7 @@ class Config:
         while mod:
             try:
                 if isinstance(mod, str):
-                    if mod.lower().startswith('env:'):
+                    if mod.lower().startswith("env:"):
                         mod = os.environ[mod[4:]]
 
                     mod = import_module(mod)
@@ -142,15 +155,18 @@ class Config:
                 break
 
             except (ImportError, KeyError):
-                logger.debug('Ignore invalid configuration module given: %s', mod)
-                mod = fallback.pop(0) if fallback else ''
+                logger.debug("Ignore invalid configuration module given: %s", mod)
+                mod = fallback.pop(0) if fallback else ""
 
         else:
             return None
 
-        members = getmembers(mod, lambda v: not (isclass(v) or ismodule(v) or isbuiltin(v)))
+        members = getmembers(
+            mod, lambda v: not (isclass(v) or ismodule(v) or isbuiltin(v))
+        )
         self.update_from_dict(
-            dict(members), exist_only=exist_only, annotations=t.get_type_hints(mod))
+            dict(members), exist_only=exist_only, annotations=t.get_type_hints(mod)
+        )
         return mod.__name__
 
     def update_from_env(self, prefix: str = None):
@@ -164,6 +180,8 @@ class Config:
 
         prefix = (prefix or self.__env_prefix).upper()
         trim = len(prefix)
-        options = {n[trim:]: v for n, v in os.environ.items() if n.upper().startswith(prefix)}
+        options = {
+            n[trim:]: v for n, v in os.environ.items() if n.upper().startswith(prefix)
+        }
 
         return self.update_from_dict(options, exist_only=True, processor=processor)

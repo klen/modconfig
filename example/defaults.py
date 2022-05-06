@@ -1,13 +1,12 @@
 import datetime as dt
-
 from pathlib import Path
+from typing import Dict
 
+ENV = "production"
 
-ENV = 'production'
+SECRET = "unsecure"
 
-SECRET = 'unsecure'
-
-API_KEY = 'something'
+API_KEY = "something"
 
 APP_DIR: Path = Path(__file__).parent.parent.absolute()
 
@@ -15,7 +14,4 @@ API_TOKEN_EXPIRE = dt.timedelta(days=60)
 
 SOME_LIMIT = 42
 
-DATABASE = {
-    'host': 'localhost',
-    'user': 'guest'
-}
+DATABASE: Dict[str, str] = {"host": "localhost", "user": "guest"}
