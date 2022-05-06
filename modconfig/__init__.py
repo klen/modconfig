@@ -8,7 +8,7 @@ from importlib import import_module
 from inspect import getmembers, isbuiltin, isclass, ismodule
 from types import ModuleType
 
-__version__ = "1.2.0"
+__version__ = "1.2.1"
 __license__ = "MIT"
 __all__ = ("Config",)
 
