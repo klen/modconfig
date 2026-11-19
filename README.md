@@ -72,8 +72,9 @@ assert cfg.ANY_OPTION1
 
 Option names are case-insensitive: `cfg.DATABASE`, `cfg.database` and
 `cfg["database"]` return the same value. The type of an option comes from the
-first value it receives; anything set later is converted to that type, and a
-value that cannot be converted is logged and ignored.
+first value it receives, or from a bare type hint in the config module
+(`LIMIT: int = 5`); anything set later is converted to that type, and a value
+that cannot be converted is logged and ignored.
 
 ### Fallbacks
 
@@ -110,6 +111,16 @@ Any option may be overridden with an ENV variable. Values are parsed as JSON
 when possible, so dicts and lists work; anything else stays a string.
 
 ENV variables for options that do not exist in the config are ignored.
+
+To pick up overrides only for your app, give them a prefix:
+
+```python
+cfg = Config("myapp.config.production", config_config={"env_prefix": "APP_"})
+# APP_DATABASE overrides DATABASE, DEMOENV is ignored
+```
+
+The meta options of the config itself (`env_prefix`, `update_from_env`) are
+passed through `config_config`.
 
 See [tests.py](https://github.com/klen/modconfig/blob/develop/tests.py) for
 more examples.

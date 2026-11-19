@@ -1,4 +1,9 @@
-"""Modconfig to support configuration from modules."""
+"""Hierarchic configuration for applications, kept in Python modules.
+
+Options are loaded from one of several modules (development, production,
+staging, ...) and may be overridden by keyword arguments and by OS
+environment variables.
+"""
 
 import json
 import logging
@@ -26,7 +31,17 @@ types_supported: set[type] = {int, float, bool, str, bytes, object, list, tuple,
 
 class Config:
 
-    """Basic class to keep a configuration."""
+    """Application configuration loaded from Python modules and overrides.
+
+    Options are stored under upper-cased names, so access is case-insensitive:
+    ``cfg.database``, ``cfg.DATABASE`` and ``cfg["database"]`` are the same
+    option. The type of an option comes from the first value it receives;
+    later values are converted to that type, and a value that cannot be
+    converted is logged and ignored.
+
+    Sources are applied in order: modules given on init, option overrides
+    (keyword arguments), then the OS environment.
+    """
 
     __slots__ = "__env_prefix", "__storage", "__annotations"
 
@@ -38,12 +53,14 @@ class Config:
     ) -> None:
         """Initialize the config.
 
-        :param config_config: A dictionary with config's options
-
-        Available options (default):
-            - update_from_env (True) update the config from OS environment
-            - env_prefix ("") a prefix to read options from OS environment
-
+        :param mods: Module objects or import paths. The first one that can be
+            imported is used, the rest are fallbacks; a path prefixed with
+            ``env:`` is looked up in the OS environment first.
+        :param config_config: Meta options of the config itself.
+            ``update_from_env`` (True) reads options from the OS environment
+            after initialization, ``env_prefix`` ("") limits that to variables
+            starting with the given prefix.
+        :param options: Option overrides applied after the modules are loaded.
         """
         opts = config_config or {}
 
@@ -60,30 +77,40 @@ class Config:
             self.update_from_env()
 
     def __repr__(self) -> str:
-        """Representation."""
+        """Show the loaded options."""
         return "<Config %r>" % self.__storage
 
     def __iter__(self) -> Iterator[tuple[str, object]]:
-        """Iterate through self."""
+        """Iterate over ``(NAME, value)`` pairs."""
         return iter(self.__storage.items())
 
     def __getattr__(self, name: str) -> Any:
-        """Proxy attributes to self storage."""
+        """Look an option up as an attribute.
+
+        :raises AttributeError: The option is not set.
+        """
         try:
             return self.__storage[name.upper()]
         except KeyError:
             raise AttributeError(f"Invalid option: {name}")
 
     def __getitem__(self, name: str) -> Any:
-        """Proxy attributes to self storage."""
+        """Look an option up by name.
+
+        :raises KeyError: The option is not set.
+        """
         return self.__storage[name.upper()]
 
     def get(self, name: str, default: object = None) -> Any:
-        """Get an item from the config."""
+        """Look an option up by name, falling back to ``default``.
+
+        :param name: Option name, case-insensitive.
+        :param default: Returned when the option is not set.
+        """
         return self.__storage.get(name.upper(), default)
 
     def update(self, *mods: str | ModuleType, **options: Any) -> None:
-        """Update the configuration."""
+        """Load modules and apply overrides on top of the current options."""
         self.update_from_modules(*mods)
         self.update_from_dict(options, exist_only=False)
 
@@ -96,7 +123,21 @@ class Config:
         processor: Callable[[Any], Any] = identity,
         annotations: Mapping[str, Callable[[Any], Any]] | None = None,
     ) -> None:
-        """Update the configuration from given dictionary."""
+        """Merge options from a mapping into the configuration.
+
+        Option names are upper-cased and options starting with ``_`` are
+        skipped.
+
+        :param options: Raw ``name -> value`` pairs.
+        :param exist_only: Only update options that are already set, which
+            keeps unknown names out of the config (used for the environment).
+        :param prefix: Only accept names starting with the prefix, and strip it
+            before storing.
+        :param processor: Called on each raw value before type conversion, e.g.
+            to parse JSON.
+        :param annotations: Option types by original name, usually module type
+            hints; they win over the type of the value.
+        """
         annotations = annotations or {}
         prefix = prefix.upper()
         prefix_length = len(prefix)
@@ -146,7 +187,13 @@ class Config:
     def update_from_modules(
         self, *mods: str | ModuleType, exist_only: bool = False
     ) -> str | None:
-        """Load a module from the given python path or environment."""
+        """Load options from the first available module.
+
+        :param mods: Module objects or import paths. A path prefixed with
+            ``env:`` is looked up in the OS environment first.
+        :param exist_only: Only update options that are already set.
+        :return: Name of the loaded module, or None when nothing was imported.
+        """
         try:
             mod, *fallback = mods
         except ValueError:
@@ -179,7 +226,14 @@ class Config:
         return mod.__name__
 
     def update_from_env(self, prefix: str | None = None) -> None:
-        """Update the configuration from environment variables."""
+        """Update the configuration from environment variables.
+
+        Only options that are already set are updated. Values are parsed as
+        JSON when possible and stay strings otherwise.
+
+        :param prefix: Variable name prefix, defaults to the ``env_prefix`` meta
+            option; the prefix is stripped from the option names.
+        """
 
         def processor(value: str) -> Any:
             try:
