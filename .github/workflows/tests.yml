@@ -1,6 +1,3 @@
-# This workflow will install Python dependencies, run tests and lint with a single version of Python
-# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
-
 name: tests
 
 on:
@@ -10,10 +7,18 @@ on:
   push:
     branches: [master, develop]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   tests:
 
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
@@ -21,26 +26,15 @@ jobs:
 
     steps:
     - name: Checkout changes
-      uses: actions/checkout@v2
+      uses: actions/checkout@v7
+      with:
+        persist-credentials: false
 
     - name: Install uv
-      uses: astral-sh/setup-uv@v6
+      uses: astral-sh/setup-uv@v10
       with:
         python-version: ${{ matrix.python-version }}
+        enable-cache: true
 
     - name: Test with pytest
       run: uv run --locked pytest tests.py
-
-  notify:
-    runs-on: ubuntu-latest
-    needs: tests
-    steps:
-
-    - name: Notify Success
-      uses: archive/github-actions-slack@master
-      with:
-          slack-channel: C2CRL4C4V
-          slack-text: Tests are passed *[${{ github.repository }}] (${{ github.ref }})* https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          slack-bot-user-oauth-access-token: ${{ secrets.SLACK_BOT_TOKEN }}
-          slack-optional-as_user: false
-          slack-optional-icon_emoji: ":white_check_mark:"

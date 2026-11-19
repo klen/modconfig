@@ -6,54 +6,48 @@ on:
     branches: [master]
     types: [completed]
 
+permissions:
+  contents: read
+
 jobs:
 
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     if: github.event.workflow_run.conclusion == 'success'
     steps:
 
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v7
       with:
-        fetch-depth: 5
+        ref: ${{ github.event.workflow_run.head_sha }}
+        persist-credentials: false
 
-    - uses: astral-sh/setup-uv@v6
+    - uses: astral-sh/setup-uv@v10
 
     - name: Build package
       run: uv build
 
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       with:
         name: dist
         path: dist
+        if-no-files-found: error
+        retention-days: 5
 
   release:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: [build]
     steps:
 
     - name: Download a distribution artifact
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: dist
         path: dist
 
-    - name: Publish distribution 📦 to PyPI
-      uses: pypa/gh-action-pypi-publish@master
+    - name: Publish distribution to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
       with:
         user: __token__
         password: ${{ secrets.pypi }}
-
-  notify:
-    runs-on: ubuntu-latest
-    needs: release
-    steps:
-
-    - name: Notify Success
-      uses: archive/github-actions-slack@master
-      with:
-          slack-channel: C2CRL4C4V
-          slack-text: Build is success *[${{ github.repository }}] (${{ github.ref }})* https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          slack-bot-user-oauth-access-token: ${{ secrets.SLACK_BOT_TOKEN }}
-          slack-optional-as_user: false
-          slack-optional-icon_emoji: ":white_check_mark:"
