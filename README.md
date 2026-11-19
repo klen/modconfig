@@ -70,9 +70,14 @@ assert cfg.DATABASE
 assert cfg.ANY_OPTION1
 ```
 
+Option names are case-insensitive: `cfg.DATABASE`, `cfg.database` and
+`cfg["database"]` return the same value. The type of an option comes from the
+first value it receives; anything set later is converted to that type, and a
+value that cannot be converted is logged and ignored.
+
 ### Fallbacks
 
-If you provide several modules, `modconfig` will be using the first available:
+With several modules, `modconfig` uses the first one it can import:
 
 ```python
 from modconfig import Config
@@ -101,15 +106,27 @@ assert cfg.DATABASE
 
 ### Custom environment variables
 
-Any option may be redefined with ENV variables. By default `modconfig` tries to
-parse the value as JSON, which allows us to set complex values (dict, list,
-etc). If the value is not JSON it is parsed as a string.
+Any option may be overridden with an ENV variable. Values are parsed as JSON
+when possible, so dicts and lists work; anything else stays a string.
 
-Any ENV variables which names are not contained in the source module are
-ignored.
+ENV variables for options that do not exist in the config are ignored.
 
 See [tests.py](https://github.com/klen/modconfig/blob/develop/tests.py) for
 more examples.
+
+## Limitations
+
+Configuration modules are Python code, so importing one executes it. Keep them
+as trusted as the application itself.
+
+Only the first importable module in the list is used. The rest are fallbacks for
+when an earlier module is missing, not layers that get merged.
+
+ENV overrides apply only to options that already exist in the config; unknown
+variables are ignored rather than added.
+
+Because an option keeps the type of its first value, replacing an `int` with a
+`str` later does not work: the string is converted back to an `int` or dropped.
 
 ## Bug tracker
 
