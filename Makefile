@@ -2,8 +2,9 @@ VERSION	?= minor
 
 .PHONY: version
 version:
-	pip install bump2version
-	bump2version $(VERSION)
+	uv version --bump $(VERSION)
+	git commit -am "build(version): $$(uv version --short)"
+	git tag $$(uv version --short)
 	git checkout master
 	git pull
 	git merge develop
@@ -35,14 +36,12 @@ clean:
 
 .PHONY: test
 test:
-	@pip install -e .[tests]
-	@pytest tests.py
+	@uv run pytest tests.py
 
 
 .PHONY: mypy
 mypy:
-	@pip install -e .[tests]
-	@mypy modconfig
+	@uv run mypy modconfig
 
 
 .PHONY: t

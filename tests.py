@@ -1,7 +1,7 @@
 import pytest
 
 
-def test_base():
+def test_base() -> None:
     from modconfig import Config
 
     cfg = Config("unknown", config_config=dict(env_prefix="CONFIG"))
@@ -22,14 +22,14 @@ def test_base():
     test = cfg.update_from_modules()
     assert not test
 
-    test = list(cfg)
-    assert test == [("OPTION", 43)]
+    items = list(cfg)
+    assert items == [("OPTION", 43)]
 
     cfg.update(fn=lambda: 42)
     assert cfg.FN() == 42
 
 
-def test_update_from_dict():
+def test_update_from_dict() -> None:
     from modconfig import Config
 
     cfg = Config(ignore_case=True, var1=1, VAR2=2)
@@ -44,7 +44,7 @@ def test_update_from_dict():
     assert cfg.var == 11
 
 
-def test_import_modules():
+def test_import_modules() -> None:
     from example import tests
     from modconfig import Config
 
@@ -78,7 +78,7 @@ def test_import_modules():
     assert cfg.ENV == "tests"
 
 
-def test_env(monkeypatch):
+def test_env(monkeypatch: pytest.MonkeyPatch) -> None:
     from modconfig import Config
 
     # Config accepts modules path from ENV variables

@@ -3,19 +3,25 @@
 import json
 import logging
 import os
-import typing as t
+from collections.abc import Callable, Iterator, Mapping
 from importlib import import_module
+from importlib.metadata import PackageNotFoundError, version
 from inspect import getmembers, isbuiltin, isclass, ismodule
 from types import ModuleType
+from typing import Any, get_type_hints
 
-__version__ = "1.2.1"
+try:
+    __version__ = version("modconfig")
+except PackageNotFoundError:  # running from a source checkout
+    __version__ = "0.0.0"
+
 __license__ = "MIT"
 __all__ = ("Config",)
 
 
 logger: logging.Logger = logging.getLogger("scfg")
-identity: t.Callable = lambda v: v  # noqa
-types_supported = {int, float, bool, str, bytes, object, list, tuple, dict}
+identity: Callable[[Any], Any] = lambda v: v  # noqa
+types_supported: set[type] = {int, float, bool, str, bytes, object, list, tuple, dict}
 
 
 class Config:
@@ -25,8 +31,11 @@ class Config:
     __slots__ = "__env_prefix", "__storage", "__annotations"
 
     def __init__(
-        self, *mods: t.Union[str, ModuleType], config_config: t.Dict = None, **options
-    ):
+        self,
+        *mods: str | ModuleType,
+        config_config: Mapping[str, Any] | None = None,
+        **options: Any,
+    ) -> None:
         """Initialize the config.
 
         :param config_config: A dictionary with config's options
@@ -38,8 +47,8 @@ class Config:
         """
         opts = config_config or {}
 
-        self.__storage: t.Dict[str, object] = {}
-        self.__annotations: t.Dict[str, t.Callable] = {}
+        self.__storage: dict[str, object] = {}
+        self.__annotations: dict[str, Callable[[Any], Any]] = {}
         self.__env_prefix: str = opts.get("env_prefix", "")
 
         if mods:
@@ -54,39 +63,39 @@ class Config:
         """Representation."""
         return "<Config %r>" % self.__storage
 
-    def __iter__(self) -> t.Iterator:
+    def __iter__(self) -> Iterator[tuple[str, object]]:
         """Iterate through self."""
         return iter(self.__storage.items())
 
-    def __getattr__(self, name: str) -> t.Any:
+    def __getattr__(self, name: str) -> Any:
         """Proxy attributes to self storage."""
         try:
             return self.__storage[name.upper()]
         except KeyError:
             raise AttributeError(f"Invalid option: {name}")
 
-    def __getitem__(self, name: str) -> t.Any:
+    def __getitem__(self, name: str) -> Any:
         """Proxy attributes to self storage."""
         return self.__storage[name.upper()]
 
-    def get(self, name: str, default: object = None) -> t.Any:
+    def get(self, name: str, default: object = None) -> Any:
         """Get an item from the config."""
         return self.__storage.get(name.upper(), default)
 
-    def update(self, *mods: t.Union[str, ModuleType], **options):
+    def update(self, *mods: str | ModuleType, **options: Any) -> None:
         """Update the configuration."""
         self.update_from_modules(*mods)
         self.update_from_dict(options, exist_only=False)
 
     def update_from_dict(
         self,
-        options: t.Mapping,
+        options: Mapping[str, object],
         *,
         exist_only: bool = True,
         prefix: str = "",
-        processor: t.Callable = identity,
-        annotations: t.Dict = None,
-    ):
+        processor: Callable[[Any], Any] = identity,
+        annotations: Mapping[str, Callable[[Any], Any]] | None = None,
+    ) -> None:
         """Update the configuration from given dictionary."""
         annotations = annotations or {}
         prefix = prefix.upper()
@@ -135,8 +144,8 @@ class Config:
                 continue
 
     def update_from_modules(
-        self, *mods: t.Union[str, ModuleType], exist_only: bool = False
-    ) -> t.Optional[str]:
+        self, *mods: str | ModuleType, exist_only: bool = False
+    ) -> str | None:
         """Load a module from the given python path or environment."""
         try:
             mod, *fallback = mods
@@ -165,14 +174,14 @@ class Config:
             mod, lambda v: not (isclass(v) or ismodule(v) or isbuiltin(v))
         )
         self.update_from_dict(
-            dict(members), exist_only=exist_only, annotations=t.get_type_hints(mod)
+            dict(members), exist_only=exist_only, annotations=get_type_hints(mod)
         )
         return mod.__name__
 
-    def update_from_env(self, prefix: str = None):
+    def update_from_env(self, prefix: str | None = None) -> None:
         """Update the configuration from environment variables."""
 
-        def processor(value):
+        def processor(value: str) -> Any:
             try:
                 return json.loads(value)
             except ValueError:
@@ -184,4 +193,4 @@ class Config:
             n[trim:]: v for n, v in os.environ.items() if n.upper().startswith(prefix)
         }
 
-        return self.update_from_dict(options, exist_only=True, processor=processor)
+        self.update_from_dict(options, exist_only=True, processor=processor)

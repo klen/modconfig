@@ -17,32 +17,19 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.7', '3.8', '3.9', '3.10']
+        python-version: ['3.11', '3.12', '3.13', '3.14', '3.15']
 
     steps:
     - name: Checkout changes
       uses: actions/checkout@v2
 
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+    - name: Install uv
+      uses: astral-sh/setup-uv@v6
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Cache env
-      id: cache-env
-      uses: actions/cache@v2.1.5
-      with:
-        path: env
-        key: env-${{ matrix.python-version }}-${{ hashFiles('setup.cfg') }}
-
-    - name: Install dependencies
-      run: |
-        python -m venv env
-        env/bin/pip install .[tests]
-      if: steps.cache-env.outputs.cache-hit != 'true'
-
     - name: Test with pytest
-      run: env/bin/pytest tests.py
+      run: uv run --locked pytest tests.py
 
   notify:
     runs-on: ubuntu-latest
